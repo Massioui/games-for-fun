@@ -2,9 +2,10 @@
 
 internal sealed class Snake
 {
-    public Snake(Point startingPoint, int length, char symbol = Symbols.Asterisk)
+    public Snake(Point startingPoint, int length, char symbol = Symbols.Asterisk, Direction direction = Direction.Right)
     {
         Symbol = symbol;
+        CurrentDirection = direction;
 
         _body = Enumerable
             .Range(Digits.Zero, length)
@@ -13,6 +14,8 @@ internal sealed class Snake
     }
 
     public char Symbol { get; private set; }
+    public Direction CurrentDirection { get; private set; }
+
     private readonly SnakePart[] _body;
     private SnakePart Head => _body[Digits.Zero];
     private SnakePart Tail => _body[^1];
@@ -24,6 +27,8 @@ internal sealed class Snake
 
     public void Move(Direction direction)
     {
+        CurrentDirection = direction;
+
         SnakePart newHead = direction switch
         {
             Direction.Up => new SnakePart(new Point(Head.Position.X, Head.Position.Y - 1), Symbol),
@@ -36,7 +41,7 @@ internal sealed class Snake
 
         Tail.Erase();
 
-        // Should be use List instead of array
+        // TODO: Should be use List instead of array
         for (var index = _body.Length - 1; index > 0; index--)
         {
             _body[index] = _body[index - 1];
@@ -45,8 +50,9 @@ internal sealed class Snake
 
 
         Draw();
+
+        // TODO: Speed control
+        Task.Delay(100).Wait();
     }
-
-
 }
 
