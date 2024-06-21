@@ -1,8 +1,7 @@
-﻿using NSnake.Extensions;
-
-Console.CursorVisible = false;
-Point startingPoint = new(Console.WindowWidth / 2, Console.WindowHeight / 2);
-Snake snake = new(startingPoint, 5, Symbols.Asterisk);
+﻿Console.CursorVisible = false;
+Point startingPoint = new(Console.WindowWidth / Digits.Two, Console.WindowHeight / Digits.Two);
+Point fieldSize = new(Console.WindowWidth, Console.WindowHeight);
+Snake snake = new(startingPoint, fieldSize, Digits.Five, Symbols.Asterisk);
 
 snake.Draw();
 

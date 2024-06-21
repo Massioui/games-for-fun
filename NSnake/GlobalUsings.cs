@@ -3,6 +3,7 @@ global using System.Drawing;
 global using NSnake.Constants;
 global using NSnake.Enumerations;
 global using NSnake.Exceptions;
+global using NSnake.Extensions;
 
 // third-party
 
