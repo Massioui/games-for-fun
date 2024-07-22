@@ -7,7 +7,12 @@ snake.Draw();
 
 while (true)
 {
-  if (snake.IsSelfCollision()) break;
+  bool isCollision = snake.IsBoundaryCollision() || snake.IsSelfCollision();
+  if (isCollision)
+  {
+    Console.Beep();
+    break;
+  }
 
   if (!Console.KeyAvailable)
   {
@@ -17,7 +22,10 @@ while (true)
 
   ConsoleKey key = Console.ReadKey(true).Key;
 
-  if (key == ConsoleKey.Q) break;
+  if (key == ConsoleKey.Q)
+  {
+    break;
+  }
 
   snake.Move(key.ToDirection() ?? snake.CurrentDirection);
 }

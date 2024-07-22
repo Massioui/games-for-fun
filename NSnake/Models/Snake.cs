@@ -36,9 +36,9 @@ internal sealed class Snake
     HandleFeedConsumption();
 
     SnakePart newHead = CreateHeadInDirection(direction);
-    
+
     _body.Add(newHead);
-    
+
     _tail.Erase();
 
     _body.Remove(_tail);
@@ -55,6 +55,21 @@ internal sealed class Snake
     var isCollisionDetected = bodyWithoutHeadPositions.Exists(position => position == _head.Position);
 
     return isCollisionDetected;
+  }
+
+  public bool IsBoundaryCollision()
+  {
+    int minX = Digits.Zero;
+    int maxX = FieldSize.X;
+    int minY = Digits.Zero;
+    int maxY = FieldSize.Y;
+
+    Point snakeHeadPosition = _head.Position;
+
+    bool isXCollision = snakeHeadPosition.X == minX || snakeHeadPosition.X == maxX;
+    bool isYCollision = snakeHeadPosition.Y == minY || snakeHeadPosition.Y == maxY;
+
+    return isXCollision || isYCollision;
   }
 
   private void GenerateFeed()
