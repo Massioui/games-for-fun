@@ -2,37 +2,25 @@
 
 internal sealed class Snake
 {
-  public Snake(Point startingPoint, Point fieldSize, int length, char symbol = Symbols.Asterisk, Direction direction = Direction.Right)
+  public char Symbol { get; private set; }
+  public Direction CurrentDirection { get; private set; }
+  public Point FieldSize { get; private set; }
+
+  private readonly List<SnakePart> _body;
+  private SnakePart _head => _body[^1];
+  private SnakePart _tail => _body[Digits.Zero];
+  private Feed _feed = null!;
+
+  public Snake(Point startingPoint, Point fieldSize, char symbol = Symbols.Asterisk, Direction direction = Direction.Right)
   {
     Symbol = symbol;
     CurrentDirection = direction;
     FieldSize = fieldSize;
 
-    _body = Enumerable
-        .Range(Digits.Zero, length)
-        .Select(x => new SnakePart(startingPoint, symbol))
-        .ToList();
+    _body = [new SnakePart(startingPoint, symbol)];
 
-    _feed =
-        new Feed(Symbols.Asterisk)
-        .Generate(ExtractBodyPositions(), fieldSize);
-
-    _feed.Draw();
+    GenerateFeed();
   }
-
-  public char Symbol { get; private set; }
-
-  public Direction CurrentDirection { get; private set; }
-
-  public Point FieldSize { get; private set; }
-
-  private readonly List<SnakePart> _body;
-
-  private SnakePart _head => _body[^1];
-
-  private SnakePart _tail => _body[Digits.Zero];
-
-  private Feed _feed;
 
   public void Draw()
   {
@@ -42,23 +30,53 @@ internal sealed class Snake
   public void Move(Direction direction)
   {
     if (CurrentDirection.IsOpposite(direction)) direction = CurrentDirection;
-    
+
     CurrentDirection = direction;
 
-    bool isHeadOnFeed = _head.Position == _feed.Position;
-    if (isHeadOnFeed) EatFeed();
+    HandleFeedConsumption();
 
     SnakePart newHead = CreateHeadInDirection(direction);
-
+    
+    _body.Add(newHead);
+    
     _tail.Erase();
 
-    _body.Remove(_tail);  
-
-    _body.Add(newHead);
+    _body.Remove(_tail);
 
     newHead.Draw();
 
     Task.Delay(100).Wait();
+  }
+
+  public bool IsSelfCollision()
+  {
+    List<SnakePart> bodyWithoutHead = _body[..^1];
+    List<Point> bodyWithoutHeadPositions = bodyWithoutHead.Select(snakePart => snakePart.Position).ToList();
+    var isCollisionDetected = bodyWithoutHeadPositions.Exists(position => position == _head.Position);
+
+    return isCollisionDetected;
+  }
+
+  private void GenerateFeed()
+  {
+    _feed =
+          new Feed(Symbols.Asterisk)
+          .Generate(ExtractBodyPositions(), FieldSize);
+
+    _feed.Draw();
+  }
+
+  private Point[] ExtractBodyPositions() =>
+      _body.Select(snakePart => snakePart.Position).ToArray();
+
+  private void HandleFeedConsumption()
+  {
+    bool isHeadOnFeed = _head.Position == _feed.Position;
+
+    if (!isHeadOnFeed) return;
+
+    EatFeed();
+    GenerateFeed();
   }
 
   private void EatFeed()
@@ -68,16 +86,7 @@ internal sealed class Snake
     _body.Add(new SnakePart(_feed.Position, Symbol));
 
     _feed.Erase();
-
-    _feed =
-       new Feed(Symbols.Asterisk)
-       .Generate(ExtractBodyPositions(), FieldSize);
-
-    _feed.Draw();
   }
-
-  private Point[] ExtractBodyPositions() =>
-      _body.Select(snakePart => snakePart.Position).ToArray();
 
   public SnakePart CreateHeadInDirection(Direction direction)
   {

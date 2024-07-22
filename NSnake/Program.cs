@@ -1,23 +1,25 @@
 ﻿Console.CursorVisible = false;
 Point startingPoint = new(Console.WindowWidth / Digits.Two, Console.WindowHeight / Digits.Two);
 Point fieldSize = new(Console.WindowWidth, Console.WindowHeight);
-Snake snake = new(startingPoint, fieldSize, Digits.Five, Symbols.Asterisk);
+Snake snake = new(startingPoint, fieldSize, Symbols.Asterisk);
 
 snake.Draw();
 
 while (true)
 {
-    if (!Console.KeyAvailable)
-    {
-        snake.Move(snake.CurrentDirection);
-        continue;
-    }
+  if (snake.IsSelfCollision()) break;
 
-    ConsoleKey key = Console.ReadKey(true).Key;
+  if (!Console.KeyAvailable)
+  {
+    snake.Move(snake.CurrentDirection);
+    continue;
+  }
 
-    if (key == ConsoleKey.Q) break;
+  ConsoleKey key = Console.ReadKey(true).Key;
 
-    snake.Move(key.ToDirection() ?? snake.CurrentDirection);
+  if (key == ConsoleKey.Q) break;
+
+  snake.Move(key.ToDirection() ?? snake.CurrentDirection);
 }
 
 Console.CursorVisible = true;
