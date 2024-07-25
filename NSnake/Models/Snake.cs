@@ -3,23 +3,20 @@
 internal sealed class Snake
 {
   public char Symbol { get; private set; }
-  public Direction CurrentDirection { get; private set; }
-  public Point FieldSize { get; private set; }
+  public Direction Direction { get; private set; }
+  public int Speed { get; private set; }
 
   private readonly List<SnakePart> _body;
-  private SnakePart _head => _body[^1];
+  public SnakePart Head => _body[^1];
   private SnakePart _tail => _body[Digits.Zero];
-  private Feed _feed = null!;
 
-  public Snake(Point startingPoint, Point fieldSize, char symbol = Symbols.Asterisk, Direction direction = Direction.Right)
+  public Snake(Point startingPoint, char symbol = Symbols.Asterisk, Direction direction = Direction.Right, int speed = Digits.OneHundred)
   {
     Symbol = symbol;
-    CurrentDirection = direction;
-    FieldSize = fieldSize;
+    Direction = direction;
+    Speed = speed;
 
     _body = [new SnakePart(startingPoint, symbol)];
-
-    GenerateFeed();
   }
 
   public void Draw()
@@ -27,90 +24,67 @@ internal sealed class Snake
     foreach (var snakePart in _body) snakePart.Draw();
   }
 
-  public void Move(Direction direction)
+  public void ChangeDirection(Direction direction)
   {
-    if (CurrentDirection.IsOpposite(direction)) direction = CurrentDirection;
+    if (direction.IsOpposite(Direction)) return;
 
-    CurrentDirection = direction;
+    Direction = direction;
+  }
 
-    HandleFeedConsumption();
+  public void IncreaseSpeed(ushort delayReduction)
+  {
+    Speed = (delayReduction >= Speed) ? Speed : Speed - delayReduction;
+  }
 
-    SnakePart newHead = CreateHeadInDirection(direction);
+  public void Move()
+  {
+    SnakePart newHead = CreateHeadInDirection(Direction);
 
     _body.Add(newHead);
 
     _tail.Erase();
 
     _body.Remove(_tail);
-
-    newHead.Draw();
-
-    Task.Delay(100).Wait();
   }
 
-  public bool IsSelfCollision()
+  public bool IsSelfCollision(Point? excludePoint = default)
   {
     List<SnakePart> bodyWithoutHead = _body[..^1];
     List<Point> bodyWithoutHeadPositions = bodyWithoutHead.Select(snakePart => snakePart.Position).ToList();
-    var isCollisionDetected = bodyWithoutHeadPositions.Exists(position => position == _head.Position);
+
+    if (excludePoint.HasValue)
+    {
+      bodyWithoutHeadPositions = bodyWithoutHeadPositions.Where(position => position != excludePoint.Value).ToList();
+    }
+
+    var isCollisionDetected = bodyWithoutHeadPositions.Exists(position => position == Head.Position);
 
     return isCollisionDetected;
   }
 
-  public bool IsBoundaryCollision()
+  public Point[] GetBodyPositions()
   {
-    int minX = Digits.Zero;
-    int maxX = FieldSize.X;
-    int minY = Digits.Zero;
-    int maxY = FieldSize.Y;
+    Point[] bodyPositions =
+      _body
+      .Select(snakePart => snakePart.Position)
+      .ToArray();
 
-    Point snakeHeadPosition = _head.Position;
-
-    bool isXCollision = snakeHeadPosition.X == minX || snakeHeadPosition.X == maxX;
-    bool isYCollision = snakeHeadPosition.Y == minY || snakeHeadPosition.Y == maxY;
-
-    return isXCollision || isYCollision;
+    return bodyPositions;
   }
 
-  private void GenerateFeed()
+  public void EatFeed(Point feedPosition)
   {
-    _feed =
-          new Feed(Symbols.Asterisk)
-          .Generate(ExtractBodyPositions(), FieldSize);
-
-    _feed.Draw();
-  }
-
-  private Point[] ExtractBodyPositions() =>
-      _body.Select(snakePart => snakePart.Position).ToArray();
-
-  private void HandleFeedConsumption()
-  {
-    bool isHeadOnFeed = _head.Position == _feed.Position;
-
-    if (!isHeadOnFeed) return;
-
-    EatFeed();
-    GenerateFeed();
-  }
-
-  private void EatFeed()
-  {
-    Console.Beep();
-
-    _body.Add(new SnakePart(_feed.Position, Symbol));
-
-    _feed.Erase();
+    _body.Add(new SnakePart(feedPosition, Symbol));
   }
 
   public SnakePart CreateHeadInDirection(Direction direction)
   {
     return direction switch
     {
-      Direction.Up => new SnakePart(new Point(_head.Position.X, _head.Position.Y - 1), Symbol),
-      Direction.Down => new SnakePart(new Point(_head.Position.X, _head.Position.Y + 1), Symbol),
-      Direction.Left => new SnakePart(new Point(_head.Position.X - 1, _head.Position.Y), Symbol),
-      Direction.Right => new SnakePart(new Point(_head.Position.X + 1, _head.Position.Y), Symbol),
+      Direction.Up => new SnakePart(new Point(Head.Position.X, Head.Position.Y - 1), Symbol),
+      Direction.Down => new SnakePart(new Point(Head.Position.X, Head.Position.Y + 1), Symbol),
+      Direction.Left => new SnakePart(new Point(Head.Position.X - 1, Head.Position.Y), Symbol),
+      Direction.Right => new SnakePart(new Point(Head.Position.X + 1, Head.Position.Y), Symbol),
       _ => throw new InvalidDirectionException(string.Format(ExceptionMessages.InvalidDirection, direction))
     };
   }
