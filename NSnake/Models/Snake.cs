@@ -7,7 +7,7 @@ internal sealed class Snake
   public int Speed { get; private set; }
 
   private readonly List<SnakePart> _body;
-  public SnakePart Head => _body[^1];
+  private SnakePart _head => _body[^1];
   private SnakePart _tail => _body[Digits.Zero];
 
   public Snake(Point startingPoint, char symbol = Symbols.Asterisk, Direction direction = Direction.Right, int speed = Digits.OneHundred)
@@ -36,6 +36,8 @@ internal sealed class Snake
     Speed = (delayReduction >= Speed) ? Speed : Speed - delayReduction;
   }
 
+  public SnakePart GetHead() => _head;
+
   public void Move()
   {
     SnakePart newHead = CreateHeadInDirection(Direction);
@@ -57,7 +59,7 @@ internal sealed class Snake
       bodyWithoutHeadPositions = bodyWithoutHeadPositions.Where(position => position != excludePoint.Value).ToList();
     }
 
-    var isCollisionDetected = bodyWithoutHeadPositions.Exists(position => position == Head.Position);
+    var isCollisionDetected = bodyWithoutHeadPositions.Exists(position => position == _head.Position);
 
     return isCollisionDetected;
   }
@@ -81,10 +83,10 @@ internal sealed class Snake
   {
     return direction switch
     {
-      Direction.Up => new SnakePart(new Point(Head.Position.X, Head.Position.Y - 1), Symbol),
-      Direction.Down => new SnakePart(new Point(Head.Position.X, Head.Position.Y + 1), Symbol),
-      Direction.Left => new SnakePart(new Point(Head.Position.X - 1, Head.Position.Y), Symbol),
-      Direction.Right => new SnakePart(new Point(Head.Position.X + 1, Head.Position.Y), Symbol),
+      Direction.Up => new SnakePart(new Point(_head.Position.X, _head.Position.Y - 1), Symbol),
+      Direction.Down => new SnakePart(new Point(_head.Position.X, _head.Position.Y + 1), Symbol),
+      Direction.Left => new SnakePart(new Point(_head.Position.X - 1, _head.Position.Y), Symbol),
+      Direction.Right => new SnakePart(new Point(_head.Position.X + 1, _head.Position.Y), Symbol),
       _ => throw new InvalidDirectionException(string.Format(ExceptionMessages.InvalidDirection, direction))
     };
   }
